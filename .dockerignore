@@ -1,0 +1,17 @@
+.git
+.gitignore
+.gitattributes
+.venv
+venv
+__pycache__
+*.py[cod]
+*.so
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.DS_Store
+.env
+.env.*
+*.log
+testoutput.txt
