@@ -1,0 +1,206 @@
+{
+  "api-gateway": {
+    "title": "API Gateway Runbook",
+    "common_issues": [
+      {
+        "symptom": "High latency on all routes",
+        "likely_cause": "Downstream service degradation or connection pool saturation",
+        "diagnostic_steps": [
+          "Check error rates on downstream services (auth, user, order)",
+          "Check active connection count — should be < 5000",
+          "Check thread pool utilization metric",
+          "Review recent deployments on dependent services"
+        ],
+        "remediation": "If downstream issue, fix downstream first. If gateway overload, scale replicas to 6+."
+      },
+      {
+        "symptom": "5xx errors on specific route prefix",
+        "likely_cause": "Target service is down or misconfigured",
+        "diagnostic_steps": [
+          "Identify which route prefix is failing from logs",
+          "Check health of the target service",
+          "Verify service discovery entries are correct"
+        ],
+        "remediation": "Restart target service, or rollback if recent deployment."
+      }
+    ]
+  },
+  "auth-service": {
+    "title": "Auth Service Runbook",
+    "common_issues": [
+      {
+        "symptom": "Token validation timeouts",
+        "likely_cause": "Redis cache unavailable or session store overloaded",
+        "diagnostic_steps": [
+          "Check Redis connectivity and latency",
+          "Check auth-service memory usage — JWT parsing leak known in v2.3.x",
+          "Check active session count"
+        ],
+        "remediation": "If memory leak: rollback to last stable version. If Redis: failover to replica."
+      },
+      {
+        "symptom": "Memory usage growing unbounded",
+        "likely_cause": "Known memory leak in JWT token cache (versions 2.3.0-2.3.4)",
+        "diagnostic_steps": [
+          "Check deployed version — vulnerable range is 2.3.0 to 2.3.4",
+          "Run memory profiler diagnostic",
+          "Check GC pause times"
+        ],
+        "remediation": "Rollback to v2.2.x or upgrade to v2.3.5+. Restart will provide temporary relief."
+      }
+    ]
+  },
+  "user-service": {
+    "title": "User Service Runbook",
+    "common_issues": [
+      {
+        "symptom": "Slow profile lookups",
+        "likely_cause": "Database replica lag or cache miss storm",
+        "diagnostic_steps": [
+          "Check replica replication lag (should be < 100ms)",
+          "Check Redis hit rate for user cache",
+          "Check database-replica CPU and connections"
+        ],
+        "remediation": "If replica lag: direct reads to primary temporarily. If cache: warm cache from replica."
+      }
+    ]
+  },
+  "order-service": {
+    "title": "Order Service Runbook",
+    "common_issues": [
+      {
+        "symptom": "Order creation failures",
+        "likely_cause": "Database connection pool exhausted or payment-service timeout",
+        "diagnostic_steps": [
+          "Check database-primary active connections — pool max is 200",
+          "Check order-service connection pool utilization",
+          "Check payment-service health and latency",
+          "Review recent deployments"
+        ],
+        "remediation": "If connection leak: rollback deployment, then restart connection pool. If payment timeout: increase timeout or activate circuit breaker."
+      },
+      {
+        "symptom": "Database connection pool exhausted",
+        "likely_cause": "Connection leak — connections acquired but never released",
+        "diagnostic_steps": [
+          "Run connection_pool_status diagnostic on order-service",
+          "Check for recent deployments that modified DB layer",
+          "Compare connection acquisition vs release rates"
+        ],
+        "remediation": "Rollback the deployment that introduced the leak. Restart database-primary to clear stale connections."
+      }
+    ]
+  },
+  "payment-service": {
+    "title": "Payment Service Runbook",
+    "common_issues": [
+      {
+        "symptom": "Payment processing failures",
+        "likely_cause": "External payment gateway timeout or database write failure",
+        "diagnostic_steps": [
+          "Check external gateway connectivity",
+          "Check database-primary write latency",
+          "Check for data inconsistencies between payment records and order records"
+        ],
+        "remediation": "If gateway: enable fallback provider. If DB: check for schema migration issues."
+      },
+      {
+        "symptom": "Data inconsistency between payment and order records",
+        "likely_cause": "Race condition during blue-green deployment, or stale cache reads",
+        "diagnostic_steps": [
+          "Run data_consistency_check diagnostic",
+          "Check if multiple versions were running simultaneously",
+          "Verify cache invalidation is working on deployment",
+          "Check transaction isolation levels"
+        ],
+        "remediation": "Stop dual-version traffic. Run data reconciliation. Fix affected records via targeted update."
+      }
+    ]
+  },
+  "notification-service": {
+    "title": "Notification Service Runbook",
+    "common_issues": [
+      {
+        "symptom": "Notification backlog growing",
+        "likely_cause": "Consumer throughput reduced or message-queue overloaded",
+        "diagnostic_steps": [
+          "Check message-queue depth and consumer count",
+          "Check notification-service processing rate",
+          "Check for upstream service flooding queue with retries"
+        ],
+        "remediation": "Scale notification-service consumers. If upstream flood: fix upstream retry storm first."
+      }
+    ]
+  },
+  "database-primary": {
+    "title": "Primary Database Runbook",
+    "common_issues": [
+      {
+        "symptom": "Connection pool at capacity",
+        "likely_cause": "Connection leak in a client service or traffic spike",
+        "diagnostic_steps": [
+          "Run connection_pool_status diagnostic — check per-service connection counts",
+          "Identify which service holds the most connections",
+          "Check if connection count is growing without releases",
+          "Check for long-running queries holding connections"
+        ],
+        "remediation": "Fix the leaking service first (usually rollback). Then restart database to clear stale connections."
+      },
+      {
+        "symptom": "High write latency",
+        "likely_cause": "Lock contention, vacuum running, or replication backpressure",
+        "diagnostic_steps": [
+          "Check active lock count and wait events",
+          "Check if autovacuum is running",
+          "Check WAL generation rate"
+        ],
+        "remediation": "If locks: identify and kill blocking queries. If vacuum: let it complete or increase resources."
+      }
+    ]
+  },
+  "database-replica": {
+    "title": "Database Replica Runbook",
+    "common_issues": [
+      {
+        "symptom": "Replication lag > 1 second",
+        "likely_cause": "Heavy write load on primary or replica resource constraint",
+        "diagnostic_steps": [
+          "Check replica lag metric",
+          "Check replica CPU and I/O utilization",
+          "Check WAL receiver status"
+        ],
+        "remediation": "If resource issue: scale replica. If persistent: consider adding another replica."
+      }
+    ]
+  },
+  "redis-cache": {
+    "title": "Redis Cache Runbook",
+    "common_issues": [
+      {
+        "symptom": "High memory usage or evictions",
+        "likely_cause": "Cache capacity exceeded or TTLs not set properly",
+        "diagnostic_steps": [
+          "Check memory usage vs max memory",
+          "Check eviction rate",
+          "Check hit/miss ratio"
+        ],
+        "remediation": "Increase maxmemory or fix TTL policy on hot keys."
+      }
+    ]
+  },
+  "message-queue": {
+    "title": "Message Queue Runbook",
+    "common_issues": [
+      {
+        "symptom": "Queue depth growing, consumers lagging",
+        "likely_cause": "Consumer failure, or producer flooding due to upstream retry storm",
+        "diagnostic_steps": [
+          "Check consumer count and processing rate",
+          "Check producer rate — is it abnormally high?",
+          "Check for poison messages in DLQ"
+        ],
+        "remediation": "If consumer issue: restart consumers. If producer flood: fix upstream retry logic."
+      }
+    ]
+  }
+}

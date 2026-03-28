@@ -1,0 +1,133 @@
+============================================================
+  Incident Response Commander — Baseline Inference
+============================================================
+  LLM endpoint: https://api.groq.com/openai/v1
+  Model: llama-3.1-8b-instant
+  Environment: http://localhost:7860
+  Tasks: ['task1_db_outage', 'task2_cascade_failure', 'task3_data_corruption']
+
+  Environment health check: OK
+
+============================================================
+  Starting task: task1_db_outage
+============================================================
+  [Step 1] Action: check_metrics → database-primary
+    Reward: step=0.020, cumulative=0.020
+  [Step 2] Action: query_logs → order-service
+    Reward: step=0.020, cumulative=0.040
+  [Step 3] Action: check_metrics → user-service
+    Reward: step=0.020, cumulative=0.060
+  [Step 4] Action: view_dependency_graph → order-service
+    Reward: step=0.000, cumulative=0.060
+  [Step 5] Action: consult_runbook → order-service
+    Reward: step=0.000, cumulative=0.060
+  [Step 6] Action: declare_root_cause
+    Reward: step=0.250, cumulative=0.310
+  [Step 7] Action: apply_remediation → order-service
+    Reward: step=0.100, cumulative=0.410
+  [Step 8] Action: update_status
+    Reward: step=0.020, cumulative=0.430
+  [Step 9] Action: resolve_incident
+    Reward: step=0.000, cumulative=0.703
+
+  Task completed in 9 steps.
+  Final score: 0.7033
+
+  Feedback:
+  Final score: 0.70/1.00
+    Investigation: 0.15/0.20
+    Root cause:    0.30/0.30
+    Remediation:   0.08/0.25
+    Time:          0.08/0.10
+    Communication: 0.04/0.10
+    Safety:        0.05/0.05
+  Task task1_db_outage: score=0.7033, time=106.8s
+
+============================================================
+  Starting task: task2_cascade_failure
+============================================================
+  [Step 1] Action: check_alerts
+    Reward: step=0.010, cumulative=0.010
+  [Step 2] Action: investigate_service → auth-service
+    Reward: step=0.020, cumulative=0.030
+  [Step 3] Action: query_logs → auth-service
+    Reward: step=0.020, cumulative=0.050
+  [Step 4] Action: check_metrics → auth-service
+    Reward: step=0.020, cumulative=0.070
+  [Step 5] Action: run_diagnostic → auth-service
+    Reward: step=0.020, cumulative=0.090
+  [Step 6] Action: consult_runbook → auth-service
+    Reward: step=0.000, cumulative=0.090
+  [Step 7] Action: declare_root_cause
+    Reward: step=0.250, cumulative=0.340
+  [Step 8] Action: apply_remediation → auth-service
+    Reward: step=0.100, cumulative=0.440
+  [Step 9] Action: update_status
+    Reward: step=0.020, cumulative=0.460
+  [Step 10] Action: update_status
+    Reward: step=0.020, cumulative=0.480
+  [Step 11] Action: resolve_incident
+    Reward: step=0.000, cumulative=0.617
+
+  Task completed in 11 steps.
+  Final score: 0.6166
+
+  Feedback:
+  Final score: 0.62/1.00
+    Investigation: 0.03/0.20
+    Root cause:    0.30/0.30
+    Remediation:   0.08/0.25
+    Time:          0.08/0.10
+    Communication: 0.07/0.10
+    Safety:        0.05/0.05
+  Task task2_cascade_failure: score=0.6166, time=262.0s
+
+============================================================
+  Starting task: task3_data_corruption
+============================================================
+  [Step 1] Action: check_alerts
+    Reward: step=0.010, cumulative=0.010
+  [Step 2] Action: investigate_service → order-service
+    Reward: step=0.020, cumulative=0.030
+  [Step 3] Action: query_logs → order-service
+    Reward: step=0.020, cumulative=0.050
+  [Step 4] Action: check_metrics → order-service
+    Reward: step=0.020, cumulative=0.070
+  [Step 5] Action: view_dependency_graph → order-service
+    Reward: step=0.000, cumulative=0.070
+  [Step 6] Action: run_diagnostic → payment-service
+    Reward: step=0.020, cumulative=0.090
+  [Step 7] Action: consult_runbook → order-service
+    Reward: step=0.000, cumulative=0.090
+  [Step 8] Action: declare_root_cause
+    Reward: step=0.250, cumulative=0.340
+  [Step 9] Action: apply_remediation → order-service
+    Reward: step=0.000, cumulative=0.340
+  [Step 10] Action: update_status
+    Reward: step=0.020, cumulative=0.360
+  [Step 11] Action: resolve_incident
+    Reward: step=0.000, cumulative=0.557
+
+  Task completed in 11 steps.
+  Final score: 0.5567
+
+  Feedback:
+  Final score: 0.56/1.00
+    Investigation: 0.07/0.20
+    Root cause:    0.30/0.30
+    Remediation:   0.00/0.25
+    Time:          0.10/0.10
+    Communication: 0.04/0.10
+    Safety:        0.05/0.05
+  Task task3_data_corruption: score=0.5567, time=200.0s
+
+============================================================
+  RESULTS SUMMARY
+============================================================
+  task1_db_outage                [############################............] 0.7033
+  task2_cascade_failure          [########################................] 0.6166
+  task3_data_corruption          [######################..................] 0.5567
+
+  Average score: 0.6255
+  Total runtime: 568.8s
+============================================================

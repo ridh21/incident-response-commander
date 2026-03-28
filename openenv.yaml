@@ -1,0 +1,97 @@
+name: incident-response-commander
+version: "1.0.0"
+description: >
+  Production incident response environment for AI agent training.
+  An agent acts as an on-call SRE, diagnosing and resolving infrastructure
+  incidents across a realistic 10-service microservice architecture.
+  Features service dependency graphs, runbooks, cascading failures,
+  time-pressure mechanics, and multi-dimensional reward scoring.
+
+author: Ridham Patel
+license: MIT
+tags:
+  - openenv
+  - incident-response
+  - sre
+  - devops
+  - microservices
+
+docker:
+  image: incident-response-commander
+  port: 7860
+
+env_vars:
+  - API_BASE_URL
+  - MODEL_NAME
+  - HF_TOKEN
+
+endpoints:
+  health: /health
+  metadata: /metadata
+  schema: /schema
+  reset: /reset
+  step: /step
+  state: /state
+
+action_model: models.Action
+observation_model: models.Observation
+reward_model: models.Reward
+
+tasks:
+  - id: task1_db_outage
+    name: "Database Connection Pool Exhaustion"
+    difficulty: easy
+    max_steps: 25
+    description: >
+      A deployment to order-service introduced a connection leak. Database
+      connections are saturating. Diagnose the leak, rollback the deployment,
+      and clear stale connections.
+    grader:
+      type: programmatic
+      score_range: [0.0, 1.0]
+      dimensions:
+        - investigation_efficiency
+        - root_cause_accuracy
+        - remediation_correctness
+        - time_efficiency
+        - communication_quality
+        - safety_bonus
+
+  - id: task2_cascade_failure
+    name: "Cascading Service Failure"
+    difficulty: medium
+    max_steps: 30
+    description: >
+      A memory leak in auth-service is causing cascading failures across
+      api-gateway, user-service, and notification-service. Trace the
+      dependency chain to find the root cause and apply targeted fixes.
+    grader:
+      type: programmatic
+      score_range: [0.0, 1.0]
+      dimensions:
+        - investigation_efficiency
+        - root_cause_accuracy
+        - remediation_correctness
+        - time_efficiency
+        - communication_quality
+        - safety_bonus
+
+  - id: task3_data_corruption
+    name: "Data Inconsistency from Deployment Race Condition"
+    difficulty: hard
+    max_steps: 35
+    description: >
+      A blue-green deployment of payment-service caused a race condition.
+      847 orders are marked paid but payments were never processed.
+      Investigate across services, assess blast radius, apply data
+      reconciliation, and prevent recurrence.
+    grader:
+      type: programmatic
+      score_range: [0.0, 1.0]
+      dimensions:
+        - investigation_efficiency
+        - root_cause_accuracy
+        - remediation_correctness
+        - time_efficiency
+        - communication_quality
+        - safety_bonus

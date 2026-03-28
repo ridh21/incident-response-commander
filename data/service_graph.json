@@ -1,0 +1,163 @@
+{
+  "services": {
+    "api-gateway": {
+      "description": "Public-facing API gateway routing all external requests",
+      "port": 8080,
+      "dependencies": ["auth-service", "user-service", "order-service"],
+      "team": "platform",
+      "tier": "critical",
+      "baseline_metrics": {
+        "cpu_percent": 35.0,
+        "memory_percent": 45.0,
+        "error_rate_percent": 0.1,
+        "request_latency_p99_ms": 120.0,
+        "active_connections": 2500
+      }
+    },
+    "auth-service": {
+      "description": "Handles authentication, token validation, and session management",
+      "port": 8081,
+      "dependencies": ["redis-cache", "database-primary"],
+      "team": "security",
+      "tier": "critical",
+      "baseline_metrics": {
+        "cpu_percent": 20.0,
+        "memory_percent": 30.0,
+        "error_rate_percent": 0.05,
+        "request_latency_p99_ms": 45.0,
+        "active_connections": 800
+      }
+    },
+    "user-service": {
+      "description": "User profile management and account operations",
+      "port": 8082,
+      "dependencies": ["database-primary", "database-replica", "redis-cache"],
+      "team": "accounts",
+      "tier": "high",
+      "baseline_metrics": {
+        "cpu_percent": 25.0,
+        "memory_percent": 40.0,
+        "error_rate_percent": 0.08,
+        "request_latency_p99_ms": 80.0,
+        "active_connections": 1200
+      }
+    },
+    "order-service": {
+      "description": "Order lifecycle management: creation, updates, fulfillment",
+      "port": 8083,
+      "dependencies": ["database-primary", "payment-service", "notification-service", "message-queue"],
+      "team": "commerce",
+      "tier": "critical",
+      "baseline_metrics": {
+        "cpu_percent": 30.0,
+        "memory_percent": 50.0,
+        "error_rate_percent": 0.12,
+        "request_latency_p99_ms": 200.0,
+        "active_connections": 600
+      }
+    },
+    "payment-service": {
+      "description": "Payment processing, refunds, and billing integration",
+      "port": 8084,
+      "dependencies": ["database-primary", "message-queue"],
+      "team": "payments",
+      "tier": "critical",
+      "baseline_metrics": {
+        "cpu_percent": 15.0,
+        "memory_percent": 25.0,
+        "error_rate_percent": 0.02,
+        "request_latency_p99_ms": 350.0,
+        "active_connections": 300
+      }
+    },
+    "notification-service": {
+      "description": "Email, SMS, and push notification dispatch",
+      "port": 8085,
+      "dependencies": ["message-queue", "redis-cache"],
+      "team": "engagement",
+      "tier": "medium",
+      "baseline_metrics": {
+        "cpu_percent": 10.0,
+        "memory_percent": 20.0,
+        "error_rate_percent": 0.5,
+        "request_latency_p99_ms": 500.0,
+        "active_connections": 150
+      }
+    },
+    "database-primary": {
+      "description": "Primary PostgreSQL database (read-write)",
+      "port": 5432,
+      "dependencies": [],
+      "team": "data-infra",
+      "tier": "critical",
+      "baseline_metrics": {
+        "cpu_percent": 40.0,
+        "memory_percent": 65.0,
+        "error_rate_percent": 0.0,
+        "request_latency_p99_ms": 15.0,
+        "active_connections": 180
+      }
+    },
+    "database-replica": {
+      "description": "PostgreSQL read replica for query offloading",
+      "port": 5433,
+      "dependencies": ["database-primary"],
+      "team": "data-infra",
+      "tier": "high",
+      "baseline_metrics": {
+        "cpu_percent": 30.0,
+        "memory_percent": 55.0,
+        "error_rate_percent": 0.0,
+        "request_latency_p99_ms": 12.0,
+        "active_connections": 120
+      }
+    },
+    "redis-cache": {
+      "description": "Redis caching layer for sessions, rate limits, and hot data",
+      "port": 6379,
+      "dependencies": [],
+      "team": "data-infra",
+      "tier": "high",
+      "baseline_metrics": {
+        "cpu_percent": 15.0,
+        "memory_percent": 70.0,
+        "error_rate_percent": 0.0,
+        "request_latency_p99_ms": 2.0,
+        "active_connections": 500
+      }
+    },
+    "message-queue": {
+      "description": "RabbitMQ message broker for async processing",
+      "port": 5672,
+      "dependencies": [],
+      "team": "data-infra",
+      "tier": "high",
+      "baseline_metrics": {
+        "cpu_percent": 20.0,
+        "memory_percent": 35.0,
+        "error_rate_percent": 0.01,
+        "request_latency_p99_ms": 5.0,
+        "active_connections": 200
+      }
+    }
+  },
+  "dependency_edges": [
+    {"from": "api-gateway", "to": "auth-service", "type": "sync", "protocol": "gRPC"},
+    {"from": "api-gateway", "to": "user-service", "type": "sync", "protocol": "HTTP"},
+    {"from": "api-gateway", "to": "order-service", "type": "sync", "protocol": "HTTP"},
+    {"from": "auth-service", "to": "redis-cache", "type": "sync", "protocol": "Redis"},
+    {"from": "auth-service", "to": "database-primary", "type": "sync", "protocol": "PostgreSQL"},
+    {"from": "user-service", "to": "database-primary", "type": "sync", "protocol": "PostgreSQL"},
+    {"from": "user-service", "to": "database-replica", "type": "sync", "protocol": "PostgreSQL"},
+    {"from": "user-service", "to": "redis-cache", "type": "sync", "protocol": "Redis"},
+    {"from": "order-service", "to": "database-primary", "type": "sync", "protocol": "PostgreSQL"},
+    {"from": "order-service", "to": "payment-service", "type": "sync", "protocol": "HTTP"},
+    {"from": "order-service", "to": "notification-service", "type": "async", "protocol": "AMQP"},
+    {"from": "order-service", "to": "message-queue", "type": "async", "protocol": "AMQP"},
+    {"from": "payment-service", "to": "database-primary", "type": "sync", "protocol": "PostgreSQL"},
+    {"from": "payment-service", "to": "message-queue", "type": "async", "protocol": "AMQP"},
+    {"from": "notification-service", "to": "message-queue", "type": "async", "protocol": "AMQP"},
+    {"from": "notification-service", "to": "redis-cache", "type": "sync", "protocol": "Redis"},
+    {"from": "database-replica", "to": "database-primary", "type": "replication", "protocol": "WAL"}
+  ]
+}

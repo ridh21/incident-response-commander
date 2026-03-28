@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meta-openenv-ridh21
+    ports:
+      - "7860:7860"
+    env_file:
+      - .env
+    restart: unless-stopped
