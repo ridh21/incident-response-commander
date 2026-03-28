@@ -1,88 +1,61 @@
 """
 Client for the Incident Response Commander environment.
 
-Provides both sync and async interfaces for interacting with the
-environment server over HTTP.
+Extends openenv-core's EnvClient, providing both async and sync interfaces
+for interacting with the environment server.
+
+Usage (async, recommended):
+    async with IncidentResponseEnv(base_url="http://localhost:7860") as client:
+        result = await client.reset(task_id="task1_db_outage")
+        print(result.observation.title)
+
+        result = await client.step(Action(action_type="check_alerts"))
+        print(result.reward)
+
+        state = await client.state()
+        print(state.step_count)
+
+Usage (sync via .sync() wrapper):
+    with IncidentResponseEnv(base_url="http://localhost:7860").sync() as client:
+        result = client.reset(task_id="task1_db_outage")
+        result = client.step(Action(action_type="check_alerts"))
 """
 
-from __future__ import annotations
-import requests
-from typing import Optional, Dict, Any, Tuple
-from dataclasses import dataclass
+from openenv.core import EnvClient, StepResult
 
-from models import Action, Observation, Reward, State
+from models import Action, Observation, State
 
 
-@dataclass
-class StepResult:
-    """Result from a single environment step."""
-    observation: Observation
-    reward: Reward
-    done: bool
-    info: Dict[str, Any]
+class IncidentResponseEnv(EnvClient[Action, Observation, State]):
+    """OpenEnv client for the Incident Response Commander environment.
 
-
-class IncidentResponseClient:
-    """Synchronous HTTP client for the Incident Response Commander environment.
-
-    Usage:
-        client = IncidentResponseClient("http://localhost:7860")
-        obs = client.reset(task_id="task1_db_outage")
-        result = client.step(Action(action_type="check_alerts"))
-        state = client.state()
+    Inherits async context manager and .sync() wrapper from EnvClient.
+    Implement the three protocol methods to handle this environment's
+    action/observation/state wire format.
     """
 
-    def __init__(self, base_url: str = "http://localhost:7860"):
-        self.base_url = base_url.rstrip("/")
-        self.session = requests.Session()
+    def _step_payload(self, action: Action) -> dict:
+        """Serialize an Action into the POST /step request body."""
+        return {"action": action.model_dump()}
 
-    def health(self) -> Dict[str, Any]:
-        resp = self.session.get(f"{self.base_url}/health")
-        resp.raise_for_status()
-        return resp.json()
+    def _parse_result(self, payload: dict) -> StepResult[Observation]:
+        """Parse the POST /step (or POST /reset) response into a StepResult.
 
-    def metadata(self) -> Dict[str, Any]:
-        resp = self.session.get(f"{self.base_url}/metadata")
-        resp.raise_for_status()
-        return resp.json()
+        The server returns:
+            {"observation": {...}, "reward": {"value": float, ...}, "done": bool, "info": {...}}
+        """
+        reward_raw = payload.get("reward", {})
+        if isinstance(reward_raw, dict):
+            reward_value = reward_raw.get("value", 0.0)
+        else:
+            reward_value = float(reward_raw or 0.0)
 
-    def schema(self) -> Dict[str, Any]:
-        resp = self.session.get(f"{self.base_url}/schema")
-        resp.raise_for_status()
-        return resp.json()
-
-    def reset(self, task_id: Optional[str] = None) -> Observation:
-        payload = {}
-        if task_id:
-            payload["task_id"] = task_id
-        resp = self.session.post(f"{self.base_url}/reset", json=payload)
-        resp.raise_for_status()
-        return Observation(**resp.json())
-
-    def step(self, action: Action) -> StepResult:
-        resp = self.session.post(
-            f"{self.base_url}/step",
-            json={"action": action.model_dump()},
-        )
-        resp.raise_for_status()
-        data = resp.json()
         return StepResult(
-            observation=Observation(**data["observation"]),
-            reward=Reward(**data["reward"]),
-            done=data["done"],
-            info=data["info"],
+            observation=Observation(**payload["observation"]),
+            reward=reward_value,
+            done=payload.get("done", False),
         )
 
-    def state(self) -> State:
-        resp = self.session.get(f"{self.base_url}/state")
-        resp.raise_for_status()
-        return State(**resp.json())
-
-    def close(self):
-        self.session.close()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.close()
+    def _parse_state(self, payload: dict) -> State:
+        """Parse the GET /state response into a State object."""
+        return State(**payload)

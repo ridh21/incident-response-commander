@@ -8,12 +8,14 @@ Delegates to scenario instances for task-specific logic.
 from __future__ import annotations
 from typing import Dict, Any, Optional, Tuple
 
+from openenv.core.env_server import Environment
+
 from models import Action, Observation, Reward, State
 from server.scenarios import SCENARIOS, BaseScenario
 from server.grader import compute_final_grade
 
 
-class IncidentResponseEnv:
+class IncidentResponseEnv(Environment):
     """OpenEnv-compatible environment for incident response training.
 
     Supports 3 tasks with increasing difficulty:
@@ -75,6 +77,7 @@ class IncidentResponseEnv:
 
         return obs, reward, done, info
 
+    @property
     def state(self) -> State:
         """Return the current environment state."""
         if self._scenario is None:

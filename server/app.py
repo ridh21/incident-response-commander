@@ -124,7 +124,7 @@ async def step(request: StepRequest):
 
 @app.get("/state", response_model=State)
 async def state():
-    return env.state()
+    return env.state
 
 
 def main():
