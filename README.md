@@ -162,9 +162,12 @@ pip install -r requirements.txt
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
 
 # In another terminal, run the baseline agent
-export API_BASE_URL="http://localhost:8000/v1"
-export MODEL_NAME="meta-llama/Llama-3.1-8B-Instruct"
-export HF_TOKEN="your-token"
+# Copy .env.example → .env and fill in your API key
+cp .env.example .env
+# Edit .env with your provider details, e.g. Groq (free):
+#   API_BASE_URL=https://api.groq.com/openai/v1
+#   MODEL_NAME=llama-3.1-8b-instant
+#   HF_TOKEN=gsk_your_groq_key
 python inference.py
 ```
 
@@ -203,16 +206,47 @@ print(result["done"])
 
 ## Baseline Scores
 
-Scores from `inference.py` using Meta Llama 3.1 8B Instruct:
+Scores from `inference.py` using **Llama 3.1 8B Instruct** via Groq (`llama-3.1-8b-instant`).
+Environment: `https://ridhampatel2k4-incident-response-commander.hf.space`
 
-| Task | Score | Steps Used |
-|------|-------|------------|
-| task1_db_outage | ~0.55-0.70 | 12-18 |
-| task2_cascade_failure | ~0.40-0.55 | 18-25 |
-| task3_data_corruption | ~0.30-0.45 | 22-30 |
-| **Average** | **~0.42-0.57** | |
+| Task | Difficulty | Score | Steps | Time |
+|------|-----------|-------|-------|------|
+| task1_db_outage | Easy | **0.7033** | 9/25 | 107s |
+| task2_cascade_failure | Medium | **0.6166** | 11/30 | 262s |
+| task3_data_corruption | Hard | **0.5567** | 11/35 | 200s |
+| **Average** | | **0.6255** | | **570s total** |
 
-Scores vary based on model quality. Larger models (70B+) typically score 0.60+ average.
+### Score Breakdown (task1_db_outage — 0.70)
+| Dimension | Score | Max |
+|-----------|-------|-----|
+| Investigation efficiency | 0.15 | 0.20 |
+| Root cause accuracy | 0.30 | 0.30 |
+| Remediation correctness | 0.08 | 0.25 |
+| Time efficiency | 0.08 | 0.10 |
+| Communication quality | 0.04 | 0.10 |
+| Safety bonus | 0.05 | 0.05 |
+
+### Score Breakdown (task2_cascade_failure — 0.62)
+| Dimension | Score | Max |
+|-----------|-------|-----|
+| Investigation efficiency | 0.03 | 0.20 |
+| Root cause accuracy | 0.30 | 0.30 |
+| Remediation correctness | 0.08 | 0.25 |
+| Time efficiency | 0.08 | 0.10 |
+| Communication quality | 0.07 | 0.10 |
+| Safety bonus | 0.05 | 0.05 |
+
+### Score Breakdown (task3_data_corruption — 0.56)
+| Dimension | Score | Max |
+|-----------|-------|-----|
+| Investigation efficiency | 0.07 | 0.20 |
+| Root cause accuracy | 0.30 | 0.30 |
+| Remediation correctness | 0.00 | 0.25 |
+| Time efficiency | 0.10 | 0.10 |
+| Communication quality | 0.04 | 0.10 |
+| Safety bonus | 0.05 | 0.05 |
+
+Total runtime: **570s** — well within the 20-minute limit on a 2 vCPU / 8 GB machine.
 
 ## Environment Variables
 
