@@ -1,5 +1,6 @@
 ---
-title: Incident Response Commander
+
+## title: Incident Response Commander
 emoji: 🚨
 colorFrom: red
 colorTo: purple
@@ -12,7 +13,6 @@ tags:
   - incident-response
   - sre
   - reinforcement-learning
----
 
 # Incident Response Commander
 
@@ -64,22 +64,24 @@ Each service has realistic baseline metrics, health states, log streams, and dep
 
 The agent can perform 14 distinct action types:
 
-| Action | Description | Example |
-|--------|-------------|---------|
-| `check_alerts` | View all active monitoring alerts | `{"action_type": "check_alerts"}` |
-| `investigate_service` | Check a service's health, metrics, and status | `{"action_type": "investigate_service", "target_service": "auth-service"}` |
-| `query_logs` | Search service logs with filters | `{"action_type": "query_logs", "target_service": "order-service", "parameters": {"query": "error", "time_range": "1h"}}` |
-| `check_metrics` | View time-series metrics for a service | `{"action_type": "check_metrics", "target_service": "database-primary", "parameters": {"metric": "active_connections"}}` |
-| `view_dependency_graph` | View service dependency map | `{"action_type": "view_dependency_graph", "target_service": "order-service"}` |
-| `run_diagnostic` | Run a targeted diagnostic check | `{"action_type": "run_diagnostic", "target_service": "database-primary", "parameters": {"diagnostic": "connection_pool_status"}}` |
-| `consult_runbook` | Read the operational runbook for a service | `{"action_type": "consult_runbook", "target_service": "order-service"}` |
-| `apply_remediation` | Apply a specific fix to a service | `{"action_type": "apply_remediation", "target_service": "payment-service", "parameters": {"action": "data_reconciliation"}}` |
-| `rollback_deployment` | Rollback a service's recent deployment | `{"action_type": "rollback_deployment", "target_service": "order-service"}` |
-| `scale_service` | Scale a service's replica count | `{"action_type": "scale_service", "target_service": "api-gateway", "parameters": {"replicas": 6}}` |
-| `restart_service` | Restart a service | `{"action_type": "restart_service", "target_service": "auth-service"}` |
-| `update_status` | Post a stakeholder status update | `{"action_type": "update_status", "parameters": {"severity": "SEV1", "message": "Investigating auth-service memory issue"}}` |
-| `declare_root_cause` | Declare the identified root cause | `{"action_type": "declare_root_cause", "parameters": {"root_cause": "Connection leak in order-service v2.4.1"}}` |
-| `resolve_incident` | Mark the incident as resolved | `{"action_type": "resolve_incident", "parameters": {"summary": "...", "resolution": "..."}}` |
+
+| Action                  | Description                                   | Example                                                                                                                           |
+| ----------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `check_alerts`          | View all active monitoring alerts             | `{"action_type": "check_alerts"}`                                                                                                 |
+| `investigate_service`   | Check a service's health, metrics, and status | `{"action_type": "investigate_service", "target_service": "auth-service"}`                                                        |
+| `query_logs`            | Search service logs with filters              | `{"action_type": "query_logs", "target_service": "order-service", "parameters": {"query": "error", "time_range": "1h"}}`          |
+| `check_metrics`         | View time-series metrics for a service        | `{"action_type": "check_metrics", "target_service": "database-primary", "parameters": {"metric": "active_connections"}}`          |
+| `view_dependency_graph` | View service dependency map                   | `{"action_type": "view_dependency_graph", "target_service": "order-service"}`                                                     |
+| `run_diagnostic`        | Run a targeted diagnostic check               | `{"action_type": "run_diagnostic", "target_service": "database-primary", "parameters": {"diagnostic": "connection_pool_status"}}` |
+| `consult_runbook`       | Read the operational runbook for a service    | `{"action_type": "consult_runbook", "target_service": "order-service"}`                                                           |
+| `apply_remediation`     | Apply a specific fix to a service             | `{"action_type": "apply_remediation", "target_service": "payment-service", "parameters": {"action": "data_reconciliation"}}`      |
+| `rollback_deployment`   | Rollback a service's recent deployment        | `{"action_type": "rollback_deployment", "target_service": "order-service"}`                                                       |
+| `scale_service`         | Scale a service's replica count               | `{"action_type": "scale_service", "target_service": "api-gateway", "parameters": {"replicas": 6}}`                                |
+| `restart_service`       | Restart a service                             | `{"action_type": "restart_service", "target_service": "auth-service"}`                                                            |
+| `update_status`         | Post a stakeholder status update              | `{"action_type": "update_status", "parameters": {"severity": "SEV1", "message": "Investigating auth-service memory issue"}}`      |
+| `declare_root_cause`    | Declare the identified root cause             | `{"action_type": "declare_root_cause", "parameters": {"root_cause": "Connection leak in order-service v2.4.1"}}`                  |
+| `resolve_incident`      | Mark the incident as resolved                 | `{"action_type": "resolve_incident", "parameters": {"summary": "...", "resolution": "..."}}`                                      |
+
 
 ## Observation Space
 
@@ -96,14 +98,16 @@ Each observation includes:
 
 Rewards are **multi-dimensional** and provide signal throughout the episode (not just at terminal state):
 
-| Dimension | Weight | Description |
-|-----------|--------|-------------|
-| Investigation efficiency | 0.20 | Investigating relevant services and running correct diagnostics |
-| Root cause accuracy | 0.30 | Correctly identifying the root cause |
-| Remediation correctness | 0.25 | Applying the right fix(es) to the right service(s) |
-| Time efficiency | 0.10 | Resolving quickly (fewer steps = higher reward) |
-| Communication quality | 0.10 | Posting timely and appropriate status updates |
-| Safety bonus | 0.05 | Avoiding destructive actions on healthy services |
+
+| Dimension                | Weight | Description                                                     |
+| ------------------------ | ------ | --------------------------------------------------------------- |
+| Investigation efficiency | 0.20   | Investigating relevant services and running correct diagnostics |
+| Root cause accuracy      | 0.30   | Correctly identifying the root cause                            |
+| Remediation correctness  | 0.25   | Applying the right fix(es) to the right service(s)              |
+| Time efficiency          | 0.10   | Resolving quickly (fewer steps = higher reward)                 |
+| Communication quality    | 0.10   | Posting timely and appropriate status updates                   |
+| Safety bonus             | 0.05   | Avoiding destructive actions on healthy services                |
+
 
 **Partial progress**: Agents earn incremental rewards for each useful investigation action, correct diagnostic, and status update — not just for final resolution.
 
@@ -209,51 +213,65 @@ print(result["done"])
 Scores from `inference.py` using **Llama 3.1 8B Instruct** via Groq (`llama-3.1-8b-instant`).
 Environment: `https://ridhampatel2k4-incident-response-commander.hf.space`
 
-| Task | Difficulty | Score | Steps | Time |
-|------|-----------|-------|-------|------|
-| task1_db_outage | Easy | **0.7033** | 9/25 | 107s |
-| task2_cascade_failure | Medium | **0.6166** | 11/30 | 262s |
-| task3_data_corruption | Hard | **0.5567** | 11/35 | 200s |
-| **Average** | | **0.6255** | | **570s total** |
+
+| Task                  | Difficulty | Score      | Steps | Time           |
+| --------------------- | ---------- | ---------- | ----- | -------------- |
+| task1_db_outage       | Easy       | **0.7033** | 9/25  | 107s           |
+| task2_cascade_failure | Medium     | **0.6166** | 11/30 | 262s           |
+| task3_data_corruption | Hard       | **0.5567** | 11/35 | 200s           |
+| **Average**           |            | **0.6255** |       | **570s total** |
+
 
 ### Score Breakdown (task1_db_outage — 0.70)
-| Dimension | Score | Max |
-|-----------|-------|-----|
-| Investigation efficiency | 0.15 | 0.20 |
-| Root cause accuracy | 0.30 | 0.30 |
-| Remediation correctness | 0.08 | 0.25 |
-| Time efficiency | 0.08 | 0.10 |
-| Communication quality | 0.04 | 0.10 |
-| Safety bonus | 0.05 | 0.05 |
+
+
+| Dimension                | Score | Max  |
+| ------------------------ | ----- | ---- |
+| Investigation efficiency | 0.15  | 0.20 |
+| Root cause accuracy      | 0.30  | 0.30 |
+| Remediation correctness  | 0.08  | 0.25 |
+| Time efficiency          | 0.08  | 0.10 |
+| Communication quality    | 0.04  | 0.10 |
+| Safety bonus             | 0.05  | 0.05 |
+
 
 ### Score Breakdown (task2_cascade_failure — 0.62)
-| Dimension | Score | Max |
-|-----------|-------|-----|
-| Investigation efficiency | 0.03 | 0.20 |
-| Root cause accuracy | 0.30 | 0.30 |
-| Remediation correctness | 0.08 | 0.25 |
-| Time efficiency | 0.08 | 0.10 |
-| Communication quality | 0.07 | 0.10 |
-| Safety bonus | 0.05 | 0.05 |
+
+
+| Dimension                | Score | Max  |
+| ------------------------ | ----- | ---- |
+| Investigation efficiency | 0.03  | 0.20 |
+| Root cause accuracy      | 0.30  | 0.30 |
+| Remediation correctness  | 0.08  | 0.25 |
+| Time efficiency          | 0.08  | 0.10 |
+| Communication quality    | 0.07  | 0.10 |
+| Safety bonus             | 0.05  | 0.05 |
+
 
 ### Score Breakdown (task3_data_corruption — 0.56)
-| Dimension | Score | Max |
-|-----------|-------|-----|
-| Investigation efficiency | 0.07 | 0.20 |
-| Root cause accuracy | 0.30 | 0.30 |
-| Remediation correctness | 0.00 | 0.25 |
-| Time efficiency | 0.10 | 0.10 |
-| Communication quality | 0.04 | 0.10 |
-| Safety bonus | 0.05 | 0.05 |
+
+
+| Dimension                | Score | Max  |
+| ------------------------ | ----- | ---- |
+| Investigation efficiency | 0.07  | 0.20 |
+| Root cause accuracy      | 0.30  | 0.30 |
+| Remediation correctness  | 0.00  | 0.25 |
+| Time efficiency          | 0.10  | 0.10 |
+| Communication quality    | 0.04  | 0.10 |
+| Safety bonus             | 0.05  | 0.05 |
+
 
 Total runtime: **570s** — well within the 20-minute limit on a 2 vCPU / 8 GB machine.
 
 ## Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `API_BASE_URL` | LLM API endpoint | Yes (for inference) |
-| `MODEL_NAME` | Model identifier | Yes (for inference) |
-| `HF_TOKEN` | HuggingFace / API key | Yes (for inference) |
-| `ENV_URL` | Environment server URL | No (default: http://localhost:7860) |
-| `PORT` | Server port | No (default: 7860) |
+
+| Variable       | Description            | Required                                                     |
+| -------------- | ---------------------- | ------------------------------------------------------------ |
+| `API_BASE_URL` | LLM API endpoint       | Yes (for inference)                                          |
+| `MODEL_NAME`   | Model identifier       | Yes (for inference)                                          |
+| `HF_TOKEN`     | HuggingFace / API key  | Yes (for inference)                                          |
+| `ENV_URL`      | Environment server URL | No (default: [http://localhost:7860](http://localhost:7860)) |
+| `PORT`         | Server port            | No (default: 7860)                                           |
+
+
