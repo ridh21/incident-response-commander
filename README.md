@@ -1,10 +1,12 @@
 ---
-
-## title: Incident Response Commander
+title: Incident Response Commander
 emoji: 🚨
 colorFrom: red
 colorTo: purple
 sdk: docker
+sdk_version: "5.0.0"
+python_version: "3.13"
+app_file: app.py
 app_port: 7860
 pinned: false
 license: mit
@@ -13,6 +15,7 @@ tags:
   - incident-response
   - sre
   - reinforcement-learning
+---
 
 # Incident Response Commander
 
